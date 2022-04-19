@@ -6,3 +6,6 @@ marshal/unmarshal - use spray-json lib
 
 #9
 created simple get post api
+
+#11 SKIPPED
+
