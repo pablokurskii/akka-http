@@ -19,3 +19,6 @@ create HighLevel API with Routing tree (concatenate paths/methods with ~ operato
 
 #14
 use extractRequest & extractLog to log whole incoming request
+
+#15
+more specific path in the Routing tree goes first
