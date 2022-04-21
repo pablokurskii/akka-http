@@ -22,3 +22,6 @@ use extractRequest & extractLog to log whole incoming request
 
 #15
 more specific path in the Routing tree goes first
+
+#17
+to extract string from query param use path( / Segment)
