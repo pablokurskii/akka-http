@@ -1,9 +1,18 @@
 package part3_highlevelserver
 
-
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
+import akka.pattern.ask
+import akka.util.Timeout
+// step 1
+import spray.json._
+
+import scala.concurrent.duration._
 
 case class Player(nickname: String, characterClass: String, level: Int)
 
@@ -52,8 +61,16 @@ class GameAreaMap extends Actor with ActorLogging {
   }
 }
 
+// step 2
+trait PlayerJsonProtocol extends DefaultJsonProtocol {
+  implicit val playerFormat = jsonFormat3(Player)
+}
 
-object MarshallingJSON extends App {
+object MarshallingJSON extends App
+  // step 3
+  with PlayerJsonProtocol
+  // step 4 THIS
+  with SprayJsonSupport {
 
   implicit val system = ActorSystem("MarshallingJSON")
   implicit val materializer = ActorMaterializer()
@@ -81,30 +98,39 @@ object MarshallingJSON extends App {
     - (Exercise) DELETE /api/player with JSON payload, removes the player from the map
    */
 
+  implicit val timeout = Timeout(2 seconds)
   val rtjvmGameRouteSkel =
     pathPrefix("api" / "player") {
       get {
         path("class" / Segment) { characterClass =>
-          // TODO 1: get all the players with characterClass
-          reject
+          val playersByClassFuture = (rtjvmGameMap ? GetPlayersByClass(characterClass)).mapTo[List[Player]]
+          /*TO USE complete like that magically, ADD (search for THIS keyword in this code)*/
+          complete(playersByClassFuture)
+
         } ~
           (path(Segment) | parameter('nickname)) { nickname =>
-            // TODO 2: get the player with the nickname
-            reject
+            val playerOptionFuture = (rtjvmGameMap ? GetPlayer(nickname)).mapTo[Option[Player]]
+            complete(playerOptionFuture)
           } ~
           pathEndOrSingleSlash {
-            // TODO 3: get ALL the players
-            reject
+            complete((rtjvmGameMap ? GetAllPlayers).mapTo[List[Player]])
           }
       } ~
         post {
-          // TODO 4: add a player
-          reject
+          /*entity() Extracts HttpEntity from HttpRequest, also converts payload into Player data structure
+          * TO USE entity(as[Player]) like that magically, ADD (search for THIS keyword in this code)
+          * */
+          entity(implicitly[FromRequestUnmarshaller[Player]]) { player =>
+            complete((rtjvmGameMap ? AddPlayer(player)).map(_ => StatusCodes.OK))
+          }
         } ~
         delete {
-          // TODO 5 (exercise): delete a player
-          reject
+          entity(as[Player]) { player =>
+            complete((rtjvmGameMap ? RemovePlayer(player)).map(_ => StatusCodes.OK))
+          }
         }
     }
+
+  Http().bindAndHandle(rtjvmGameRouteSkel, "localhost", 8080)
 
 }
