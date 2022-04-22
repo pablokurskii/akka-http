@@ -28,3 +28,6 @@ to extract string from query param use path( / Segment)
 
 #19
 to create custom rejection response use RejectionHandler and handleRejections()
+
+#20
+to create custom rejection response use ExceptionHandler and handleExceptions()
