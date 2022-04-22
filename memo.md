@@ -31,3 +31,7 @@ to create custom rejection response use RejectionHandler and handleRejections()
 
 #20
 to create custom rejection response use ExceptionHandler and handleExceptions()
+
+#22
+* use websocket to push data from server to client (realtime data exchange) without refreshing the page
+* to catch websocket messages on server use handleWebSocketMessages
